@@ -1,426 +1,253 @@
+
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
+
 <head>
-  <meta charset="UTF-8">
-  <title>IP GeoMap</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Fonts and Leaflet CSS -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" crossorigin />
-  <style>
-    html, body {
-      height: 100%;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      text-rendering: geometricPrecision;
-    }
-    body {
-      margin: 0;
-      padding: 0;
-      min-height: 100vh;
-      height: 100vh;
-      box-sizing: border-box;
-      overflow: hidden;
-      font-family: 'Roboto', Arial, sans-serif;
-      background: #f8f9fa;
-      color: #202124;
-      font-weight: 400;
-    }
-    .main-layout {
-      display: flex;
-      flex-direction: row;
-      height: 100vh;
-      width: 100vw;
-      background: #f8f9fa;
-    }
-    .sidebar {
-      width: 340px;
-      min-width: 260px;
-      max-width: 400px;
-      height: 100vh;
-      background: #fff;
-      box-shadow: 0 2px 12px 0 rgba(60,64,67,0.08);
-      border-radius: 0 16px 16px 0;
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      z-index: 10;
-      position: relative;
-    }
-    .sidebar-content {
-      padding: 36px 28px 28px 28px;
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      box-sizing: border-box;
-    }
-    .sidebar-title {
-      font-size: 1.8rem;
-      font-weight: 700;
-      color: #4285f4;
-      margin-bottom: 24px;
-      letter-spacing: 0.5px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-family: 'Roboto', Arial, sans-serif;
-    }
-    .geo-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      text-rendering: geometricPrecision;
-    }
-    .geo-list-group-title {
-      font-size: 1.2rem;
-      font-weight: 700;
-      color: #5f6368;
-      margin-bottom: 8px;
-      margin-top: 18px;
-      letter-spacing: 0.5px;
-      padding-left: 2px;
-      font-family: 'Roboto', Arial, sans-serif;
-    }
-    .geo-list-group:first-child .geo-list-group-title {
-      margin-top: 0;
-    }
-    .geo-list-group {
-      margin-bottom: 0;
-      padding-bottom: 0;
-    }
-    .geo-list-divider {
-      height: 1px;
-      background: #e0e0e0;
-      margin: 18px 0 10px 0;
-      border: none;
-    }
-    .geo-list li {
-      font-size: 1.1rem;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: flex-start;
-      margin-bottom: 10px;
-      padding-left: 2px;
-      font-family: 'Roboto', Arial, sans-serif;
-    }
-    .geo-list li strong {
-      color: #5f6368;
-      min-width: 0;
-      font-weight: 500;
-      font-size: 1.1rem;
-      margin-right: 10px;
-      text-align: left;
-      font-family: 'Roboto', Arial, sans-serif;
-    }
-    .geo-list li span {
-      color: #1a73e8;
-      font-weight: 500;
-      font-size: 1.15rem;
-      word-break: break-all;
-      text-align: left;
-      transition: color 0.2s, text-decoration 0.2s;
-      font-family: 'Roboto', Arial, sans-serif;
-    }
-    .geo-list li span.link {
-      color: #1a73e8;
-    }
-    .geo-list li span.link:hover {
-      color: #b5bac1;
-      text-decoration: underline;
-      cursor: pointer;
-    }
-    /* 数字/经纬度用等宽字体 */
-    .geo-list li span.mono {
-      font-family: 'Roboto', Arial, sans-serif;
-      font-size: 1.15rem;
-      color: #1a73e8;
-      font-weight: 500;
-    }
-    /* 辅助信息 */
-    .geo-list li span.aux {
-      font-size: 0.98rem;
-      color: #b5bac1;
-      font-weight: 400;
-    }
-    /* 中英文混排优化：中英文间距更自然 */
-    .zh-space {
-      margin-left: 0.25em;
-    }
-    .map-area {
-      flex: 1 1 0;
-      height: 100vh;
-      position: relative;
-      z-index: 1;
-      background: #f8f9fa;
-    }
-    #map {
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 1;
-      border-radius: 0;
-    }
-    /* 加载动画样式 */
-    .loading-indicator {
-        text-align: center;
-        padding-top: 40px;
-        font-size: 1.2rem;
-        color: #5f6368;
-    }
-    @media (max-width: 900px) {
-      .main-layout {
-        flex-direction: column;
-      }
-      .sidebar {
-        width: 100vw;
-        min-width: 0;
-        max-width: 100vw;
-        height: auto;
-        border-radius: 0 0 16px 16px;
-        box-shadow: 0 2px 12px 0 rgba(60,64,67,0.08);
-      }
-      .sidebar-content {
-        padding: 20px 5vw 16px 5vw;
-      }
-      .map-area {
-        flex: 1 1 0;
-        height: 60vh;
-        min-height: 220px;
-      }
-      #map {
-        border-radius: 0 0 12px 12px;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <title>IP数据查询</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+
+        main {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .input-group {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            width: 300px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.5s;
+            text-align: left;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        #result h3 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+
+        #result p {
+            margin: 8px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        #result p:last-child {
+            border-bottom: none;
+        }
+
+        #result strong {
+            display: inline-block;
+            width: 80px;
+            color: #555;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 600px) {
+            main {
+                margin: 10px;
+                padding: 10px;
+            }
+
+            .input-group {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            input[type="text"] {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
 </head>
+
 <body>
-  <div class="main-layout">
-    <!-- 左侧信息栏 -->
-    <aside class="sidebar">
-      <div class="sidebar-content">
-        <div class="sidebar-title">
-          IP GeoMap
-        </div>
-        <!-- 加载指示器 -->
-        <div id="loading-indicator" class="loading-indicator">Loading geographic data...</div>
-        <ul class="geo-list" id="geo-list" style="display: none;"> <!-- 初始隐藏列表 -->
-          <div class="geo-list-group">
-            <div class="geo-list-group-title">Network</div>
-            <li><strong>IP Address:</strong> <span></span></li>
-            <li><strong>ASN:</strong> <span></span></li>
-            <li><strong>ISP:</strong> <span></span></li>
-            <li><strong>Datacenter:</strong> <span></span></li>
-          </div>
-          <hr class="geo-list-divider">
-          <div class="geo-list-group">
-            <div class="geo-list-group-title">Location</div>
-            <li><strong>Country:</strong> <span></span></li>
-            <li><strong>City:</strong> <span></span></li>
-            <li><strong>Region/State:</strong> <span></span></li>
-            <li><strong>Postal Code:</strong> <span></span></li>
-            <li><strong>Longitude:</strong> <span class="mono"></span></li>
-            <li><strong>Latitude:</strong> <span class="mono"></span></li>
-          </div>
-        </ul>
-      </div>
-    </aside>
-    <!-- 右侧地图区域 -->
-    <div class="map-area">
-      <div id="map"></div>
-    </div>
-  </div>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/leaflet.js" crossorigin></script>
-  <script>
-    let map;
-    const countryMap = {
-      'JP': '日本',
-      'US': '美国',
-      'CN': '中国',
-      'DE': '德国',
-      'FR': '法国',
-      'GB': '英国',
-      'KR': '韩国',
-      'IN': '印度',
-      'RU': '俄罗斯',
-      'SG': '新加坡',
-      'AU': '澳大利亚',
-      'CA': '加拿大',
-      'BR': '巴西',
-      'NL': '荷兰',
-      'HK': '中国香港',
-      'TW': '中国台湾',
-      // ...可继续补充
-    };
-    const cityMap = {
-      'Inzai': '印西',
-      'Los Angeles': '洛杉矶',
-      'Beijing': '北京',
-      'Shanghai': '上海',
-      'Chiba': '千叶',
-      'Singapore': '新加坡',
-      'London': '伦敦',
-      'Frankfurt': '法兰克福',
-      // ...可继续补充
-    };
-    const regionMap = {
-      'Chiba': '千叶',
-      'California': '加利福尼亚',
-      'Beijing': '北京',
-      'Shanghai': '上海',
-      'Tokyo': '东京',
-      'New York': '纽约',
-      // ...可继续补充
-    };
-    async function translateText(text, targetLang = 'zh-CN') {
-      if (!text) return '';
-      try {
-        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`;
-        const res = await fetch(url);
-        const data = await res.json();
-        return data[0][0][0];
-      } catch (e) {
-        console.error("Translation failed:", e);
-        return '';
-      }
-    }
-    async function fillGeo(data) {
-      const geoList = document.getElementById('geo-list');
-      const loadingIndicator = document.getElementById('loading-indicator');
+    <main>
+        <h1>IP数据查询</h1>
+        <div class="input-group">
+             <input type="text" id="ipInput" placeholder="请输入IP地址" onkeypress="handleKeyPress(event)">
+             <button onclick="getIPInfo()">查询</button>
+         </div>
+        <div id="result"></div>
+    </main>
 
-      // Hide loading indicator and show the list
-      loadingIndicator.style.display = 'none';
-      geoList.style.display = 'block'; // Or 'flex' if needed based on parent
+    <script>
+        // 首次加载页面时调用获取本地信息
+        window.onload = getLocalIPInfo;
 
-      // Prefer static table, fallback to translation
-      let countryZh = countryMap[data.country];
-      if (!countryZh && data.country) countryZh = await translateText(data.country);
-      let cityZh = cityMap[data.city];
-      if (!cityZh && data.city) cityZh = await translateText(data.city);
-
-      // Region/State no Chinese
-      countryZh = countryZh ? `<span class='zh-space'>| ${countryZh}</span>` : '';
-      cityZh = cityZh ? `<span class='zh-space'>| ${cityZh}</span>` : '';
-
-      // Fields to display. Use data property or 'null' if missing.
-      const fields = [
-        data.clientIp ?? 'null',
-        data.asn ? 'AS' + data.asn : 'null',
-        data.asOrganization ?? 'null',
-        data.colo ?? 'null',
-        // Location分组
-        (data.country ?? 'null') + countryZh,
-        (data.city ?? 'null') + cityZh,
-        data.region ?? 'null',
-        data.postalCode ?? 'null',
-        data.longitude ?? 'null',
-        data.latitude ?? 'null'
-      ];
-
-      // Render fields
-      const spans = geoList.querySelectorAll('span');
-      spans.forEach((el, i) => {
-        el.className = ''; // Clear any previous classes like 'mono'
-        // Country/city EN+ZH spacing
-        if (i === 4 || i === 5) { // Indices for Country and City
-           // Check if English part is 'null' before adding Chinese
-           const englishPart = fields[i].split('<span')[0].trim() || ''; // Get text before potential span
-           if (englishPart === 'null' && (i === 4 || i === 5)) { // For Country/City, if English is null
-             el.textContent = 'null'; // Show only 'null'
-           } else {
-             el.innerHTML = fields[i] || 'null'; // Use innerHTML to render the span for Chinese
-           }
-        } else {
-          el.textContent = fields[i] || 'null'; // Use textContent for simple text fields
+        function getLocalIPInfo() {
+            const localApiURL = "https://speed.cloudflare.com/meta";
+            fetch(localApiURL)
+                .then(response => response.json())
+                .then(data => displayLocalResult(data))
+                .catch(error => handleRequestError(error));
         }
-      });
-    }
 
-    // Handle API fetch errors by filling fields with null
-    function handleFetchError(err) {
-        console.error("Error fetching data:", err);
-        // Call fillGeo with an empty object to render all fields as 'null'
-        fillGeo({});
-        // Initialize map to default location if fetch fails
-        initMap(0, 0);
-    }
+        function getIPInfo() {
+            const ipInput = document.getElementById("ipInput").value;
+            if (!ipInput) {
+                alert("请输入IP地址");
+                return;
+            }
 
-    // Init map and set view (initial or updated)
-    let marker; // Keep track of the marker to remove it
-    function initMap(lat, lng, updateView = false) {
-      const mapElement = document.getElementById('map');
-       if (!mapElement) { // Check if map element exists
-           console.error("Map element not found!");
-           return;
-       }
+            let apiURL;
+            if (isValidIPv4(ipInput) || isValidIPv6(ipInput)) {
+                apiURL = `https://ipinfo.chigua.tk/${ipInput}`;
+            } else {
+                alert("请输入有效的IPv4或IPv6地址");
+                return;
+            }
 
-      if (!map) {
-        // Ensure the map element is visible before initializing
-        mapElement.style.display = 'block';
-        map = L.map('map').setView([lat, lng], 6); // Initial view
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: 'Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
-          maxZoom: 18,
-        }).addTo(map);
-      }
+            fetch(apiURL)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        handleInvalidParameter(data);
+                    } else {
+                        displayQueryResult(data);
+                    }
+                })
+                .catch(error => handleRequestError(error));
+        }
 
-      // Always update view and marker if coordinates are valid and update is requested
-      // Use 0,0 check to avoid unnecessary pan to origin if data is null
-      const isValidCoord = (lat != null && lng != null && (lat !== 0 || lng !== 0));
+        function displayLocalResult(data) {
+            const resultDiv = document.getElementById("result");
+            const ipInput = document.getElementById("ipInput");
+            ipInput.value = data.clientIp;
+            resultDiv.innerHTML = `
+                <h3>本地IP信息</h3>
+                <p><strong>IP地址:</strong> ${data.clientIp}</p>
+                <p><strong>国家:</strong> ${data.country}</p>
+                <p><strong>地区:</strong> ${data.region}</p>
+                <p><strong>城市:</strong> ${data.city}</p>
+                <p><strong>邮编:</strong> ${data.postalCode}</p>
+                <p><strong>纬度:</strong> ${data.latitude}</p>
+                <p><strong>经度:</strong> ${data.longitude}</p>
+                <p><strong>ASN:</strong> ${data.asn}</p>
+                <p><strong>组织:</strong> ${data.asOrganization}</p>
+                <p><strong>数据中心:</strong> ${data.colo}</p>
+            `;
+        }
 
-      if (isValidCoord || updateView) { // Update view if valid coord or forced update
-         // Only set view if different to avoid flicker
-         if (map.getCenter().lat !== lat || map.getCenter().lng !== lng) {
-             map.setView([lat, lng], map.getZoom()); // Keep current zoom level unless specified
+        function displayQueryResult(data) {
+            const resultDiv = document.getElementById("result");
+            const ipInput = document.getElementById("ipInput");
+            ipInput.value = data.ip;
+            
+            // 解析经纬度
+            const [lat, lng] = data.loc ? data.loc.split(',') : ['', ''];
+            
+            resultDiv.innerHTML = `
+                <h3>IP查询结果</h3>
+                <p><strong>IP地址:</strong> ${data.ip}</p>
+                <p><strong>主机名:</strong> ${data.hostname || '未知'}</p>
+                <p><strong>国家:</strong> ${data.country}</p>
+                <p><strong>地区:</strong> ${data.region}</p>
+                <p><strong>城市:</strong> ${data.city}</p>
+                <p><strong>组织:</strong> ${data.org}</p>
+                <p><strong>纬度:</strong> ${lat}</p>
+                <p><strong>经度:</strong> ${lng}</p>
+                <p><strong>邮编:</strong> ${data.postal || '未知'}</p>
+                <p><strong>时区:</strong> ${data.timezone}</p>
+                <p><strong>任播:</strong> ${data.anycast ? '是' : '否'}</p>
+            `;
+        }
+
+        function handleInvalidParameter(response) {
+            const resultDiv = document.getElementById("result");
+            resultDiv.innerHTML = `
+                <h2>查询错误</h2>
+                <p><strong>错误消息:</strong> ${response.error || '无效的IP地址或查询失败'}</p>
+            `;
+        }
+
+        function handleRequestError(error) {
+            const resultDiv = document.getElementById("result");
+            resultDiv.innerHTML = `
+                <h2>请求错误</h2>
+                <p><strong>错误消息:</strong> ${error.message}</p>
+            `;
+        }
+
+        function isValidIPv4(ip) {
+            const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
+            return ipv4Regex.test(ip);
+        }
+
+        function isValidIPv6(ip) {
+             const ipv6Regex = /^(?:[0-9a-fA-F]{1,4}:){7}(?:[0-9a-fA-F]{1,4}|:)|^(?:[0-9a-fA-F]{1,4}:){1,7}:|^(?:[0-9a-fA-F]{1,4}:){1,6}:(?:[0-9a-fA-F]{1,4}|:)|^(?:[0-9a-fA-F]{1,4}:){1,5}(?::(?:[0-9a-fA-F]{1,4}|:)){1,2}|^(?:[0-9a-fA-F]{1,4}:){1,4}(?::(?:[0-9a-fA-F]{1,4}|:)){1,3}|^(?:[0-9a-fA-F]{1,4}:){1,3}(?::(?:[0-9a-fA-F]{1,4}|:)){1,4}|^(?:[0-9a-fA-F]{1,4}:){1,2}(?::(?:[0-9a-fA-F]{1,4}|:)){1,5}|^[0-9a-fA-F]{1,4}:(?::(?:[0-9a-fA-F]{1,4}|:)){1,6}|^(?:[0-9a-fA-F]{1,4}:)?::(?:[0-9a-fA-F]{1,4}:){1,7}|^(?:[0-9a-fA-F]{1,4}:)?::(?:[0-9a-fA-F]{1,4}:){1,6}$/i;
+             return ipv6Regex.test(ip);
          }
-        if (marker) {
-          map.removeLayer(marker);
-        }
-        if(isValidCoord){ // Only add marker if coordinates are valid
-             marker = L.marker([lat, lng]).addTo(map);
-        }
-      } else if (!isValidCoord && !map._loaded) { // If initial load and coords are invalid, set default view
-           map.setView([lat, lng], 6);
-      }
-    }
 
-    // Fetch geo info and render
-    async function fetchData() {
-      try {
-        const response = await fetch('https://speed.cloudflare.com/meta');
-        // Check if response is OK and content type is JSON
-        const contentType = response.headers.get("content-type");
-        if (!response.ok || !contentType || !contentType.includes("application/json")) {
-            throw new Error(`Fetch failed with status ${response.status} or invalid content type`);
-        }
-        const data = await response.json();
-        await fillGeo(data);
-        // Update map view and add marker after data is fetched
-        if (data.latitude != null && data.longitude != null) {
-             initMap(data.latitude, data.longitude, true); // Pass true to force view update
-        } else {
-             initMap(0, 0, true); // If lat/lng are null, show default map location
-        }
-
-      } catch (err) {
-        handleFetchError(err);
-      }
-    }
-
-    // Page load: initialize map immediately and fetch data concurrently
-    window.onload = () => {
-        initMap(0, 0); // Initialize map with default view immediately
-        fetchData(); // Start fetching data concurrently
-    };
-  </script>
+         function handleKeyPress(event) {
+             if (event.key === 'Enter') {
+                 getIPInfo();
+             }
+         }
+    </script>
 </body>
-</html> 
+
+</html>
